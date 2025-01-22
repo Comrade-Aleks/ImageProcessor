@@ -1,0 +1,15 @@
+{
+  "version": 2,
+  "dgSpecHash": "e6xuRmJwFBg=",
+  "success": true,
+  "projectFilePath": "C:\\Users\\Aleksander\\Documents\\GitHub\\ImageProcessor\\ImageProcessor.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\Aleksander\\.nuget\\packages\\microsoft.win32.systemevents\\9.0.1\\microsoft.win32.systemevents.9.0.1.nupkg.sha512",
+    "C:\\Users\\Aleksander\\.nuget\\packages\\sixlabors.imagesharp\\3.1.6\\sixlabors.imagesharp.3.1.6.nupkg.sha512",
+    "C:\\Users\\Aleksander\\.nuget\\packages\\system.drawing.common\\9.0.1\\system.drawing.common.9.0.1.nupkg.sha512",
+    "C:\\Users\\Aleksander\\.nuget\\packages\\system.reflection.emit\\4.7.0\\system.reflection.emit.4.7.0.nupkg.sha512",
+    "C:\\Users\\Aleksander\\.nuget\\packages\\tesseract\\5.2.0\\tesseract.5.2.0.nupkg.sha512",
+    "C:\\Users\\Aleksander\\.nuget\\packages\\tesseract.net.sdk\\4.6.411\\tesseract.net.sdk.4.6.411.nupkg.sha512"
+  ],
+  "logs": []
+}
