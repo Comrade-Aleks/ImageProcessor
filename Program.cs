@@ -17,8 +17,7 @@ namespace ProjectTesseract
         private const double ResizeFactor = 2.0;  // Scale factor for resizing the image
         private const float GlobalThreshold = 0.5f; // Threshold value (0-1 for ImageSharp)
         private const string TargetLanguage = "en"; // Target language for translation
-        private const string SourceLanguage = "nor"; // Source language for translation
-        private const string TessdataName = "nor"; // Tessdata package name (cant be same because of differences (for now))
+        private const string SourceLanguage = "jpn"; // Source language for translation
 
         static async Task Main(string[] args)
         {
@@ -48,6 +47,10 @@ namespace ProjectTesseract
                         {
                             // Extract the recognized text
                             string plainText = page.GetText();
+                            //Japanese (possibly others) do not use spaces. and so i remove the spaces for it atleast until i find a better solution. 
+                            if (SourceLanguage == "jpn") {
+                                plainText = plainText.Replace(" ", "").Replace("\n", "");
+                            }    
                             Console.WriteLine("Full Recognized Text:");
                             Console.WriteLine(plainText);
 
