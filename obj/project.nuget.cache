@@ -1,9 +1,10 @@
 {
   "version": 2,
-  "dgSpecHash": "e6xuRmJwFBg=",
+  "dgSpecHash": "4yX+PNP09Sw=",
   "success": true,
   "projectFilePath": "C:\\Users\\Aleksander\\Documents\\GitHub\\ImageProcessor\\ImageProcessor.csproj",
   "expectedPackageFiles": [
+    "C:\\Users\\Aleksander\\.nuget\\packages\\gtranslate\\2.2.8\\gtranslate.2.2.8.nupkg.sha512",
     "C:\\Users\\Aleksander\\.nuget\\packages\\microsoft.win32.systemevents\\9.0.1\\microsoft.win32.systemevents.9.0.1.nupkg.sha512",
     "C:\\Users\\Aleksander\\.nuget\\packages\\sixlabors.imagesharp\\3.1.6\\sixlabors.imagesharp.3.1.6.nupkg.sha512",
     "C:\\Users\\Aleksander\\.nuget\\packages\\system.drawing.common\\9.0.1\\system.drawing.common.9.0.1.nupkg.sha512",

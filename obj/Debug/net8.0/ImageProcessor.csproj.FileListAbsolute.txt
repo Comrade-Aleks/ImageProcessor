@@ -66,3 +66,5 @@ C:\Users\Aleksander\Documents\GitHub\ImageProcessor\obj\Debug\net8.0\refint\Imag
 C:\Users\Aleksander\Documents\GitHub\ImageProcessor\obj\Debug\net8.0\ImageProcessor.pdb
 C:\Users\Aleksander\Documents\GitHub\ImageProcessor\obj\Debug\net8.0\ImageProcessor.genruntimeconfig.cache
 C:\Users\Aleksander\Documents\GitHub\ImageProcessor\obj\Debug\net8.0\ref\ImageProcessor.dll
+C:\Users\Aleksander\Documents\GitHub\ImageProcessor\obj\Debug\net8.0\ImageProcessor.sourcelink.json
+C:\Users\Aleksander\Documents\GitHub\ImageProcessor\bin\Debug\net8.0\GTranslate.dll

@@ -2,6 +2,19 @@
   "version": 3,
   "targets": {
     "net8.0": {
+      "GTranslate/2.2.8": {
+        "type": "package",
+        "compile": {
+          "lib/net8.0/GTranslate.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/net8.0/GTranslate.dll": {
+            "related": ".xml"
+          }
+        }
+      },
       "Microsoft.Win32.SystemEvents/9.0.1": {
         "type": "package",
         "compile": {
@@ -115,6 +128,25 @@
     }
   },
   "libraries": {
+    "GTranslate/2.2.8": {
+      "sha512": "3ZrbcoAvE+xthllV1/8gPDg+VtHQ/IL7v/pQmx0nfL0sgk2I8pyq43YuQT/iN8xd0Y+i8N6fAPDKKUalzUvqyQ==",
+      "type": "package",
+      "path": "gtranslate/2.2.8",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "gtranslate.2.2.8.nupkg.sha512",
+        "gtranslate.nuspec",
+        "lib/net6.0/GTranslate.dll",
+        "lib/net6.0/GTranslate.xml",
+        "lib/net8.0/GTranslate.dll",
+        "lib/net8.0/GTranslate.xml",
+        "lib/netstandard2.0/GTranslate.dll",
+        "lib/netstandard2.0/GTranslate.xml",
+        "lib/netstandard2.1/GTranslate.dll",
+        "lib/netstandard2.1/GTranslate.xml"
+      ]
+    },
     "Microsoft.Win32.SystemEvents/9.0.1": {
       "sha512": "OxjcwJqBW/5A1111+vL9d+5KYTvOzeCTJY9zHZ0kpQI4wX075p6L7inHPSYuf0MGakVjUvaShvw9e9pfbInU2Q==",
       "type": "package",
@@ -340,6 +372,7 @@
   },
   "projectFileDependencyGroups": {
     "net8.0": [
+      "GTranslate >= 2.2.8",
       "SixLabors.ImageSharp >= 3.1.6",
       "System.Drawing.Common >= 9.0.1",
       "Tesseract >= 5.2.0",
@@ -395,6 +428,10 @@
       "net8.0": {
         "targetAlias": "net8.0",
         "dependencies": {
+          "GTranslate": {
+            "target": "Package",
+            "version": "[2.2.8, )"
+          },
           "SixLabors.ImageSharp": {
             "target": "Package",
             "version": "[3.1.6, )"

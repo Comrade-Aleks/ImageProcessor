@@ -49,6 +49,10 @@
         "net8.0": {
           "targetAlias": "net8.0",
           "dependencies": {
+            "GTranslate": {
+              "target": "Package",
+              "version": "[2.2.8, )"
+            },
             "SixLabors.ImageSharp": {
               "target": "Package",
               "version": "[3.1.6, )"
