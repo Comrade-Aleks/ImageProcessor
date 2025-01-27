@@ -67,7 +67,6 @@ C:\Users\Aleksander\Documents\GitHub\ImageProcessor\obj\Debug\net8.0-windows\Ima
 C:\Users\Aleksander\Documents\GitHub\ImageProcessor\obj\Debug\net8.0-windows\MainWindow.g.cs
 C:\Users\Aleksander\Documents\GitHub\ImageProcessor\obj\Debug\net8.0-windows\App.g.cs
 C:\Users\Aleksander\Documents\GitHub\ImageProcessor\obj\Debug\net8.0-windows\ImageProcessor_MarkupCompile.cache
-C:\Users\Aleksander\Documents\GitHub\ImageProcessor\obj\Debug\net8.0-windows\ImageProcessor_MarkupCompile.lref
 C:\Users\Aleksander\Documents\GitHub\ImageProcessor\obj\Debug\net8.0-windows\MainWindow.baml
 C:\Users\Aleksander\Documents\GitHub\ImageProcessor\obj\Debug\net8.0-windows\ImageProcessor.g.resources
 C:\Users\Aleksander\Documents\GitHub\ImageProcessor\obj\Debug\net8.0-windows\ImageProcessor.GeneratedMSBuildEditorConfig.editorconfig
