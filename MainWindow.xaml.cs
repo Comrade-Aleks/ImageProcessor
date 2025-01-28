@@ -8,6 +8,11 @@ using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 using GTranslate.Translators;
+using System.Drawing;
+using System.Windows.Forms;
+using System.IO;
+using ImageProcessor;
+
 
 namespace ImageProcessor
 {
@@ -25,29 +30,39 @@ namespace ImageProcessor
         {
             try
             {
-                // Get the selected source and target languages
-                string sourceLanguage = ((ComboBoxItem)FromLanguageComboBox.SelectedItem)?.Tag?.ToString();
-                string targetLanguage = ((ComboBoxItem)ToLanguageComboBox.SelectedItem)?.Tag?.ToString();
-
-                if (string.IsNullOrEmpty(sourceLanguage) || string.IsNullOrEmpty(targetLanguage))
+                // Show the region selection form
+                using (var regionSelector = new RegionSelectorForm())
                 {
-                    OutputTextBox.Text = "Please select both source and target languages.";
-                    return;
+                    if (regionSelector.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+                    {
+                        // Save the captured region to the Img folder
+                        string fileName = $"captured_region.png";
+                        string savedFilePath = await regionSelector.SaveCapturedRegionAsync(fileName);
+
+                        // Proceed with OCR and translation using the captured image
+                        string sourceLanguage = ((ComboBoxItem)FromLanguageComboBox.SelectedItem)?.Tag?.ToString();
+                        string targetLanguage = ((ComboBoxItem)ToLanguageComboBox.SelectedItem)?.Tag?.ToString();
+
+                        if (string.IsNullOrEmpty(sourceLanguage) || string.IsNullOrEmpty(targetLanguage))
+                        {
+                            OutputTextBox.Text = "Please select both source and target languages.";
+                            return;
+                        }
+
+                        string preprocessedImagePath = Path.Combine(
+                            Path.GetDirectoryName(savedFilePath),
+                            $"preprocessed_{Path.GetFileName(savedFilePath)}"
+                        );
+
+                        CleanAndPreprocessImage(savedFilePath, preprocessedImagePath);
+
+                        string recognizedText = await PerformOcrAsync(preprocessedImagePath, sourceLanguage); // should add a own button and sliders for preprocesing.
+                        string translatedText = await TranslateTextAsync(recognizedText, sourceLanguage, targetLanguage);
+
+                        // Display the results in the TextBox
+                        OutputTextBox.Text = $"Recognized Text:\n{recognizedText}\n\nTranslated Text:\n{translatedText}";
+                    }
                 }
-
-                // File paths (adjust as needed)
-                string imagePath = "C:\\Users\\Aleksander\\Desktop\\nor.png";
-                string preprocessedImagePath = "C:\\Users\\Aleksander\\Desktop\\preprocessed.png";
-
-                // Preprocess the image
-                CleanAndPreprocessImage(imagePath, preprocessedImagePath);
-
-                // Perform OCR and translation
-                string recognizedText = await PerformOcrAsync(preprocessedImagePath, sourceLanguage);
-                string translatedText = await TranslateTextAsync(recognizedText, sourceLanguage, targetLanguage);
-
-                // Display the results in the TextBox
-                OutputTextBox.Text = $"Recognized Text:\n{recognizedText}\n\nTranslated Text:\n{translatedText}";
             }
             catch (Exception ex)
             {
@@ -57,7 +72,6 @@ namespace ImageProcessor
 
         private void CleanAndPreprocessImage(string inputPath, string outputPath)
         {
-            // Explicitly specify SixLabors.ImageSharp.Image
             using (SixLabors.ImageSharp.Image<Rgba32> image = SixLabors.ImageSharp.Image.Load<Rgba32>(inputPath))
             {
                 image.Mutate(x => x.Resize((int)(image.Width * ResizeFactor), (int)(image.Height * ResizeFactor)));
