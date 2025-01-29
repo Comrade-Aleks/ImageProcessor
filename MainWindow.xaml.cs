@@ -8,25 +8,33 @@ using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 using GTranslate.Translators;
-using System.Drawing;
 using System.Windows.Forms;
-using System.IO;
 using ImageProcessor;
-
 
 namespace ImageProcessor
 {
     public partial class MainWindow : Window
     {
-        private const double ResizeFactor = 2.0;
-        private const float GlobalThreshold = 0.5f;
-
+        private double ResizeFactor = 2.0;
+        private float GlobalThreshold = 0.5f;
+        string fileName = "captured_region.png";
+        private string savedFilePath = "";
+        private string sourceLanguage = "";
+        private string targetLanguage = "";
         public MainWindow()
         {
+
             InitializeComponent();
         }
 
+        // This function is triggered when the "Select Region" button is clicked
         private async void ProcessButton_Click(object sender, RoutedEventArgs e)
+        {
+            await ProcessImageAsync();
+        }
+
+        // Main function to process the image: capture, preprocess, OCR, and translate
+        private async Task ProcessImageAsync()
         {
             try
             {
@@ -36,31 +44,27 @@ namespace ImageProcessor
                     if (regionSelector.ShowDialog() == System.Windows.Forms.DialogResult.OK)
                     {
                         // Save the captured region to the Img folder
-                        string fileName = $"captured_region.png";
-                        string savedFilePath = await regionSelector.SaveCapturedRegionAsync(fileName);
+                        
+                        savedFilePath = await regionSelector.SaveCapturedRegionAsync(fileName);
 
-                        // Proceed with OCR and translation using the captured image
-                        string sourceLanguage = ((ComboBoxItem)FromLanguageComboBox.SelectedItem)?.Tag?.ToString();
-                        string targetLanguage = ((ComboBoxItem)ToLanguageComboBox.SelectedItem)?.Tag?.ToString();
+                        // Ensure file path is valid
+                        if (string.IsNullOrEmpty(savedFilePath) || !File.Exists(savedFilePath))
+                        {
+                            OutputTextBox.Text = "Error: Captured image file not found.";
+                            return;
+                        }
+                        // Get selected languages from ComboBoxes
+                        sourceLanguage = ((ComboBoxItem)FromLanguageComboBox.SelectedItem)?.Tag?.ToString() ?? "";
+                        targetLanguage = ((ComboBoxItem)ToLanguageComboBox.SelectedItem)?.Tag?.ToString() ?? "";
 
+                        // Validate language selection
                         if (string.IsNullOrEmpty(sourceLanguage) || string.IsNullOrEmpty(targetLanguage))
                         {
                             OutputTextBox.Text = "Please select both source and target languages.";
                             return;
                         }
+                        ProcessAndTranslate();
 
-                        string preprocessedImagePath = Path.Combine(
-                            Path.GetDirectoryName(savedFilePath),
-                            $"preprocessed_{Path.GetFileName(savedFilePath)}"
-                        );
-
-                        CleanAndPreprocessImage(savedFilePath, preprocessedImagePath);
-
-                        string recognizedText = await PerformOcrAsync(preprocessedImagePath, sourceLanguage); // should add a own button and sliders for preprocesing.
-                        string translatedText = await TranslateTextAsync(recognizedText, sourceLanguage, targetLanguage);
-
-                        // Display the results in the TextBox
-                        OutputTextBox.Text = $"Recognized Text:\n{recognizedText}\n\nTranslated Text:\n{translatedText}";
                     }
                 }
             }
@@ -69,47 +73,111 @@ namespace ImageProcessor
                 OutputTextBox.Text = $"Error: {ex.Message}";
             }
         }
+        private async Task ProcessAndTranslate()
+        {
 
+
+            // Define preprocessed image path
+            string preprocessedImagePath = Path.Combine(
+                Path.GetDirectoryName(savedFilePath) ?? "",
+                $"preprocessed_{Path.GetFileName(savedFilePath)}"
+            );
+
+            // Apply image preprocessing
+            CleanAndPreprocessImage(savedFilePath, preprocessedImagePath);
+
+            // Perform OCR (extract text from image)
+            string recognizedText = await PerformOcrAsync(preprocessedImagePath, sourceLanguage);
+
+            // Translate extracted text
+            string translatedText = await TranslateTextAsync(recognizedText, sourceLanguage, targetLanguage);
+
+            // Display results in TextBox
+            OutputTextBox.Text = $"Recognized Text:\n{recognizedText}\n\nTranslated Text:\n{translatedText}";
+        }
+
+        // Applies image preprocessing (resize, grayscale, threshold)
         private void CleanAndPreprocessImage(string inputPath, string outputPath)
         {
-            using (SixLabors.ImageSharp.Image<Rgba32> image = SixLabors.ImageSharp.Image.Load<Rgba32>(inputPath))
+            try
             {
-                image.Mutate(x => x.Resize((int)(image.Width * ResizeFactor), (int)(image.Height * ResizeFactor)));
-                image.Mutate(x => x.Grayscale());
-                image.Mutate(x => x.BinaryThreshold(GlobalThreshold));
-                image.Save(outputPath);
+                using (SixLabors.ImageSharp.Image<Rgba32> image = SixLabors.ImageSharp.Image.Load<Rgba32>(inputPath))
+                {
+                    image.Mutate(x => x.Resize((int)(image.Width * ResizeFactor), (int)(image.Height * ResizeFactor))
+                                       .Grayscale()
+                                       .BinaryThreshold(GlobalThreshold));
+                    image.Save(outputPath);
+                }
+            }
+            catch (Exception ex)
+            {
+                OutputTextBox.Text = $"Image processing error: {ex.Message}";
             }
         }
 
-
+        // Performs OCR (Optical Character Recognition) on the processed image
         private async Task<string> PerformOcrAsync(string imagePath, string language)
         {
             string tessdataPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "tessdata");
-            using var engine = new TesseractEngine(tessdataPath, language, EngineMode.Default);
-            using var img = Pix.LoadFromFile(imagePath);
-            using var page = engine.Process(img);
-            string text = page.GetText();
 
-            // Remove spaces for certain languages (e.g., Japanese)
-            if (language == "jpn")
+            // Ensure tessdata folder exists
+            if (!Directory.Exists(tessdataPath))
             {
-                text = text.Replace(" ", "").Replace("\n", "");
+                OutputTextBox.Text = $"Error: tessdata folder not found at {tessdataPath}";
+                return "";
             }
 
-            return text;
+            try
+            {
+                return await Task.Run(() =>
+                {
+                    using var engine = new TesseractEngine(tessdataPath, language, EngineMode.Default);
+                    using var img = Pix.LoadFromFile(imagePath);
+                    using var page = engine.Process(img);
+                    string text = page.GetText();
+
+                    // Remove spaces for certain languages (e.g., Japanese)
+                    if (language == "jpn")
+                    {
+                        text = text.Replace(" ", "").Replace("\n", "");
+                    }
+
+                    return text;
+                });
+            }
+            catch (Exception ex)
+            {
+                return $"OCR Error: {ex.Message}";
+            }
         }
 
+
+        // Translates the extracted text using Google Translator
         private async Task<string> TranslateTextAsync(string text, string sourceLanguage, string targetLanguage)
         {
             try
             {
                 var translator = new GoogleTranslator();
-                var result = await translator.TranslateAsync(text, targetLanguage, sourceLanguage);
+                var result = await Task.Run(async () => await translator.TranslateAsync(text, targetLanguage, sourceLanguage));
                 return result.Translation;
             }
             catch (Exception ex)
             {
                 return $"Translation failed: {ex.Message}";
+            }
+        }
+
+        // Automatically reprocess the image when preprocessing settings change
+        private async void PreprocessingSettingsChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if (!IsLoaded) return;
+            ResizeFactor = ResizeFactorSlider.Value;
+            GlobalThreshold = (float)ThresholdSlider.Value;
+
+            // Only reprocess if there's existing text in the output
+            if (!string.IsNullOrEmpty(OutputTextBox.Text) && !OutputTextBox.Text.StartsWith("Processing..."))
+            {
+                await ProcessAndTranslate();
             }
         }
     }

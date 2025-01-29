@@ -1,4 +1,4 @@
-1. we got to make the preprocessing live and not mandatory aka, sliders (no need for button) for preprocessing.
+1. need more settings for the preprocessing, also need to make sure it does not use up the api limit. (or remove the api limit completely if possible)
 2. add a own button for translation, so that the selection only saves the image.
 3. fix so that you do not have to have the targetlanguage.
 4. add a checkbox which is named live translation, which causes the region selection to take images in intervals and auto translates
@@ -7,3 +7,4 @@
 7. add more languages
 8. add more translator options.
 9. make so that if you change language it auto changes the translation or reading. 
+10.make so that the region selection works on all screens

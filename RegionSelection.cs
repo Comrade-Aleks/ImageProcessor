@@ -30,7 +30,7 @@ namespace ImageProcessor
             this.Paint += OnPaint;
         }
 
-        private void OnMouseDown(object sender, MouseEventArgs e)
+        private void OnMouseDown(object? sender, MouseEventArgs e)
         {
             isSelecting = true;
             startPoint = e.Location;
@@ -38,7 +38,7 @@ namespace ImageProcessor
             Invalidate();
         }
 
-        private void OnMouseMove(object sender, MouseEventArgs e)
+        private void OnMouseMove(object? sender, MouseEventArgs e)
         {
             if (isSelecting)
             {
@@ -47,7 +47,7 @@ namespace ImageProcessor
             }
         }
 
-        private void OnMouseUp(object sender, MouseEventArgs e)
+        private void OnMouseUp(object? sender, MouseEventArgs e)
         {
             isSelecting = false;
             SelectedRegion = GetRectangle(startPoint, endPoint);
@@ -55,7 +55,7 @@ namespace ImageProcessor
             this.Close();
         }
 
-        private void OnPaint(object sender, PaintEventArgs e)
+        private void OnPaint(object? sender, PaintEventArgs e)
         {
             if (isSelecting)
             {
