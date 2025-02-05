@@ -43,12 +43,17 @@
         </StackPanel>
 
         <!-- Process Button -->
-        <Button x:Name="ProcessButton" Content="Select Region" Width="150" Height="30"
+        <Button x:Name="ProcessButton" Content="Read selected region" Width="150" Height="30"
                 HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,160,0,0"
                 Click="ProcessButton_Click"/>
 
+        <!-- Translation Button -->
+        <Button x:Name="TranslateButton" Content="Translate" Width="150" Height="30"
+                HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,200,0,0"
+                Click="TranslateButton_Click"/>
+
         <!-- Output Box -->
-        <TextBox x:Name="OutputTextBox" Background="#FFD3D3D3" Margin="0,210,0,0" 
+        <TextBox x:Name="OutputTextBox" Background="#FFD3D3D3" Margin="0,250,0,0" 
                  HorizontalAlignment="Stretch" VerticalAlignment="Stretch" 
                  TextWrapping="Wrap" AcceptsReturn="True" VerticalScrollBarVisibility="Auto" 
                  IsReadOnly="True"/>

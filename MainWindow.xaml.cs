@@ -21,6 +21,8 @@ namespace ImageProcessor
         private string savedFilePath = "";
         private string sourceLanguage = "";
         private string targetLanguage = "";
+        private string recognizedText = "";
+        private string translatedText = "";
         public MainWindow()
         {
 
@@ -30,11 +32,11 @@ namespace ImageProcessor
         // This function is triggered when the "Select Region" button is clicked
         private async void ProcessButton_Click(object sender, RoutedEventArgs e)
         {
-            await ProcessImageAsync();
+            await TakeImage();
         }
 
         // Main function to process the image: capture, preprocess, OCR, and translate
-        private async Task ProcessImageAsync()
+        private async Task TakeImage()
         {
             try
             {
@@ -58,12 +60,12 @@ namespace ImageProcessor
                         targetLanguage = ((ComboBoxItem)ToLanguageComboBox.SelectedItem)?.Tag?.ToString() ?? "";
 
                         // Validate language selection
-                        if (string.IsNullOrEmpty(sourceLanguage) || string.IsNullOrEmpty(targetLanguage))
+                        if (string.IsNullOrEmpty(sourceLanguage))
                         {
-                            OutputTextBox.Text = "Please select both source and target languages.";
+                            OutputTextBox.Text = "Please select a source language.";
                             return;
                         }
-                        ProcessAndTranslate();
+                        ProcessIMG();
 
                     }
                 }
@@ -73,7 +75,7 @@ namespace ImageProcessor
                 OutputTextBox.Text = $"Error: {ex.Message}";
             }
         }
-        private async Task ProcessAndTranslate()
+        private async Task ProcessIMG()
         {
 
 
@@ -87,10 +89,7 @@ namespace ImageProcessor
             CleanAndPreprocessImage(savedFilePath, preprocessedImagePath);
 
             // Perform OCR (extract text from image)
-            string recognizedText = await PerformOcrAsync(preprocessedImagePath, sourceLanguage);
-
-            // Translate extracted text
-            string translatedText = await TranslateTextAsync(recognizedText, sourceLanguage, targetLanguage);
+            recognizedText = await PerformOcrAsync(preprocessedImagePath, sourceLanguage);
 
             // Display results in TextBox
             OutputTextBox.Text = $"Recognized Text:\n{recognizedText}\n\nTranslated Text:\n{translatedText}";
@@ -151,15 +150,35 @@ namespace ImageProcessor
             }
         }
 
+        // This function is triggered when the "Translate" button is clicked
+        private async void TranslateButton_Click(object sender, RoutedEventArgs e)
+        {
+            // Translate extracted text
+            await TranslateTextAsync();
+        }
 
         // Translates the extracted text using Google Translator
-        private async Task<string> TranslateTextAsync(string text, string sourceLanguage, string targetLanguage)
+        private async Task<string> TranslateTextAsync()
         {
+            sourceLanguage = ((ComboBoxItem)FromLanguageComboBox.SelectedItem)?.Tag?.ToString() ?? "";
+            targetLanguage = ((ComboBoxItem)ToLanguageComboBox.SelectedItem)?.Tag?.ToString() ?? "";
+
+            if (string.IsNullOrEmpty(targetLanguage)) 
+            {
+                OutputTextBox.Text = "Please select a target language.";
+                return "Missing target language.";
+            }
             try
             {
+
                 var translator = new GoogleTranslator();
-                var result = await Task.Run(async () => await translator.TranslateAsync(text, targetLanguage, sourceLanguage));
-                return result.Translation;
+                var result = await Task.Run(async () => await translator.TranslateAsync(recognizedText, targetLanguage, sourceLanguage));
+
+                translatedText = result.Translation;
+
+                // Display results in TextBox
+                OutputTextBox.Text = $"Recognized Text:\n{recognizedText}\n\nTranslated Text:\n{translatedText}";
+                return translatedText;
             }
             catch (Exception ex)
             {
@@ -177,7 +196,7 @@ namespace ImageProcessor
             // Only reprocess if there's existing text in the output
             if (!string.IsNullOrEmpty(OutputTextBox.Text) && !OutputTextBox.Text.StartsWith("Processing..."))
             {
-                await ProcessAndTranslate();
+                await ProcessIMG();
             }
         }
     }
