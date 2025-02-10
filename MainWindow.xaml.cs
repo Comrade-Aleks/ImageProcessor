@@ -65,7 +65,7 @@ namespace ImageProcessor
                             OutputTextBox.Text = "Please select a source language.";
                             return;
                         }
-                        ProcessIMG();
+                        await ProcessIMG();
 
                     }
                 }

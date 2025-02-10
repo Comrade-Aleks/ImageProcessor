@@ -34,13 +34,24 @@
         <!-- Preprocessing Controls -->
         <StackPanel VerticalAlignment="Top" Margin="0,80,0,0">
             <TextBlock Text="Resize Factor" Foreground="White" />
-            <Slider x:Name="ResizeFactorSlider" Minimum="1" Maximum="4" Value="2" TickFrequency="0.1"
-                    Width="200" ValueChanged="PreprocessingSettingsChanged"/>
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <Slider x:Name="ResizeFactorSlider" Minimum="1" Maximum="4" Value="2" TickFrequency="0.5"
+                        Width="200" IsSnapToTickEnabled="True" TickPlacement="BottomRight"
+                        ValueChanged="PreprocessingSettingsChanged"/>
+                <TextBlock Text="{Binding ElementName=ResizeFactorSlider, Path=Value, StringFormat='{}{0:F1}'}"
+                        Foreground="White" Margin="10,0,0,0"/>
+            </StackPanel>
 
             <TextBlock Text="Threshold" Foreground="White" />
-            <Slider x:Name="ThresholdSlider" Minimum="0" Maximum="1" Value="0.5" TickFrequency="0.1"
-                    Width="200" ValueChanged="PreprocessingSettingsChanged"/>
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <Slider x:Name="ThresholdSlider" Minimum="0" Maximum="1" Value="0.5" TickFrequency="0.1"
+                        Width="200" IsSnapToTickEnabled="True" TickPlacement="BottomRight"
+                        ValueChanged="PreprocessingSettingsChanged"/>
+                <TextBlock Text="{Binding ElementName=ThresholdSlider, Path=Value, StringFormat='{}{0:F1}'}"
+                        Foreground="White" Margin="10,0,0,0"/>
+            </StackPanel>
         </StackPanel>
+
 
         <!-- Process Button -->
         <Button x:Name="ProcessButton" Content="Read selected region" Width="150" Height="30"
