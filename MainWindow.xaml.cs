@@ -25,8 +25,12 @@ namespace ImageProcessor
         private string translatedText = "";
         public MainWindow()
         {
-
             InitializeComponent();
+            var languageLoader = new LanguageLoading();
+            languageLoader.LoadLanguages(FromLanguageComboBox, ToLanguageComboBox);
+
+            FromLanguageComboBox.SelectionChanged += languageLoader.ComboBox_SelectionChanged;
+            ToLanguageComboBox.SelectionChanged += languageLoader.ComboBox_SelectionChanged;
         }
 
         // This function is triggered when the "Select Region" button is clicked

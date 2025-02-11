@@ -1,0 +1,6 @@
+ToLanguageComboBox Content="Russian" Tag="rus"
+ToLanguageComboBox Content="Finnish" Tag="fin"
+ToLanguageComboBox Content="English" Tag="eng"
+FromLanguageComboBox Content="English" Tag="eng"
+FromLanguageComboBox Content="Albanian" Tag="sqi"
+FromLanguageComboBox Content="Norwegian" Tag="nor"
