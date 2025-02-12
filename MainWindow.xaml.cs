@@ -1,5 +1,7 @@
 ﻿using System;
 using System.IO;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -19,8 +21,8 @@ namespace ImageProcessor
         private float GlobalThreshold = 0.5f;
         string fileName = "captured_region.png";
         private string savedFilePath = "";
-        private string sourceLanguage = "";
-        private string targetLanguage = "";
+        private string[] sourceLanguageTags = new string[2];
+        private string[] targetLanguageTags = new string[2];
         private string recognizedText = "";
         private string translatedText = "";
         public MainWindow()
@@ -59,18 +61,16 @@ namespace ImageProcessor
                             OutputTextBox.Text = "Error: Captured image file not found.";
                             return;
                         }
-                        // Get selected languages from ComboBoxes
-                        sourceLanguage = ((ComboBoxItem)FromLanguageComboBox.SelectedItem)?.Tag?.ToString() ?? "";
-                        targetLanguage = ((ComboBoxItem)ToLanguageComboBox.SelectedItem)?.Tag?.ToString() ?? "";
+
+                        GetLanguageTags();
 
                         // Validate language selection
-                        if (string.IsNullOrEmpty(sourceLanguage))
+                        if (string.IsNullOrEmpty(sourceLanguageTags[0]))
                         {
                             OutputTextBox.Text = "Please select a source language.";
                             return;
                         }
                         await ProcessIMG();
-
                     }
                 }
             }
@@ -79,10 +79,18 @@ namespace ImageProcessor
                 OutputTextBox.Text = $"Error: {ex.Message}";
             }
         }
+
+        private void GetLanguageTags()
+        {
+            // Get selected languages from ComboBoxes
+            var selectedItem = FromLanguageComboBox.SelectedItem as ComboBoxItem;
+            sourceLanguageTags = (selectedItem?.Tag as List<string>)?.ToArray() ?? new string[2];
+
+            selectedItem = ToLanguageComboBox.SelectedItem as ComboBoxItem;
+            targetLanguageTags = (selectedItem?.Tag as List<string>)?.ToArray() ?? new string[2];
+        }
         private async Task ProcessIMG()
         {
-
-
             // Define preprocessed image path
             string preprocessedImagePath = Path.Combine(
                 Path.GetDirectoryName(savedFilePath) ?? "",
@@ -93,7 +101,7 @@ namespace ImageProcessor
             CleanAndPreprocessImage(savedFilePath, preprocessedImagePath);
 
             // Perform OCR (extract text from image)
-            recognizedText = await PerformOcrAsync(preprocessedImagePath, sourceLanguage);
+            recognizedText = await PerformOcrAsync(preprocessedImagePath, sourceLanguageTags[0]);
 
             // Display results in TextBox
             OutputTextBox.Text = $"Recognized Text:\n{recognizedText}\n\nTranslated Text:\n{translatedText}";
@@ -119,7 +127,7 @@ namespace ImageProcessor
         }
 
         // Performs OCR (Optical Character Recognition) on the processed image
-        private async Task<string> PerformOcrAsync(string imagePath, string language)
+        private async Task<string> PerformOcrAsync(string imagePath, string tessLanguageTag)
         {
             string tessdataPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "tessdata");
 
@@ -134,13 +142,13 @@ namespace ImageProcessor
             {
                 return await Task.Run(() =>
                 {
-                    using var engine = new TesseractEngine(tessdataPath, language, EngineMode.Default);
+                    using var engine = new TesseractEngine(tessdataPath, tessLanguageTag, EngineMode.Default);
                     using var img = Pix.LoadFromFile(imagePath);
                     using var page = engine.Process(img);
                     string text = page.GetText();
 
                     // Remove spaces for certain languages (e.g., Japanese)
-                    if (language == "jpn")
+                    if (tessLanguageTag == "jpn")
                     {
                         text = text.Replace(" ", "").Replace("\n", "");
                     }
@@ -158,25 +166,22 @@ namespace ImageProcessor
         private async void TranslateButton_Click(object sender, RoutedEventArgs e)
         {
             // Translate extracted text
+            GetLanguageTags();
             await TranslateTextAsync();
         }
 
         // Translates the extracted text using Google Translator
         private async Task<string> TranslateTextAsync()
         {
-            sourceLanguage = ((ComboBoxItem)FromLanguageComboBox.SelectedItem)?.Tag?.ToString() ?? "";
-            targetLanguage = ((ComboBoxItem)ToLanguageComboBox.SelectedItem)?.Tag?.ToString() ?? "";
-
-            if (string.IsNullOrEmpty(targetLanguage)) 
+            if (string.IsNullOrEmpty(targetLanguageTags[1])) 
             {
                 OutputTextBox.Text = "Please select a target language.";
                 return "Missing target language.";
             }
             try
             {
-
                 var translator = new GoogleTranslator();
-                var result = await Task.Run(async () => await translator.TranslateAsync(recognizedText, targetLanguage, sourceLanguage));
+                var result = await Task.Run(async () => await translator.TranslateAsync(recognizedText, targetLanguageTags[1], sourceLanguageTags[1]));
 
                 translatedText = result.Translation;
 

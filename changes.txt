@@ -1,7 +1,5 @@
 need more settings for the preprocessing, also need to make sure it does not use up the api limit. (or remove the api limit completely if possible)
 add a checkbox which is named live translation, which causes the region selection to take images in intervals and auto translates
 make so that the translation button automatically goes to select region if a picture is not already in file.
-
-
 add more translator options.
 make so that the region selection works on all screens

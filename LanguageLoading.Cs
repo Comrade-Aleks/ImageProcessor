@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Diagnostics;
 
 namespace ImageProcessor
 {
@@ -23,13 +24,13 @@ namespace ImageProcessor
             var allLanguages = File.ReadAllLines(LanguageFilePath)
                 .Select(line =>
                 {
-                    var parts = line.Split(new[] { "Content=\"", "\" Tag=\"" }, StringSplitOptions.None);
-                    if (parts.Length < 3) return null;
+                    var parts = line.Split(new[] { "Content=\"", "\" Tag=\"", "\" GoogleTag=\"" }, StringSplitOptions.None);
+                    if (parts.Length < 4) return null;
 
                     string content = parts[1] ?? string.Empty;
-                    string tag = parts[2]?.TrimEnd('\"') ?? string.Empty;
-
-                    return new ComboBoxItem { Content = content, Tag = tag };
+                    string tesseractTag = parts[2]?.TrimEnd('"') ?? string.Empty;
+                    string googleTag = parts[3]?.TrimEnd('"') ?? string.Empty;
+                    return new ComboBoxItem { Content = content, Tag = new List<string> { tesseractTag, googleTag } };
                 })
                 .Where(item => item != null)
                 .OrderBy(item => item!.Content.ToString()) // Sort A-Z
@@ -77,6 +78,7 @@ namespace ImageProcessor
                 toComboBox.SelectedItem = lastUsedTo[0];
         }
 
+
         private List<ComboBoxItem> LoadLastUsedLanguages(string comboBoxName)
         {
             var lastUsedLanguages = new List<ComboBoxItem>();
@@ -91,13 +93,14 @@ namespace ImageProcessor
 
             foreach (var line in lastUsedLines)
             {
-                var parts = line.Split(new[] { "Content=\"", "\" Tag=\"" }, StringSplitOptions.None);
-                if (parts.Length < 3) continue;
+                var parts = line.Split(new[] { "Content=\"", "\" Tag=\"", "\" GoogleTag=\"" }, StringSplitOptions.None);
+                if (parts.Length < 4) continue;
 
                 string content = parts[1] ?? string.Empty;
-                string tag = parts[2]?.TrimEnd('\"') ?? string.Empty;
+                string tesseractTag = parts[2]?.TrimEnd('"') ?? string.Empty;
+                string googleTag = parts[3]?.TrimEnd('"') ?? string.Empty;
 
-                lastUsedLanguages.Add(new ComboBoxItem { Content = content, Tag = tag });
+                lastUsedLanguages.Add(new ComboBoxItem { Content = content, Tag = new List<string> { tesseractTag, googleTag } });
             }
 
             return lastUsedLanguages;
@@ -108,13 +111,12 @@ namespace ImageProcessor
             if (sender is ComboBox comboBox && comboBox.SelectedItem is ComboBoxItem selectedItem)
             {
                 string content = selectedItem.Content?.ToString() ?? string.Empty;
-                string tag = selectedItem.Tag?.ToString() ?? string.Empty;
-
-                SaveLastUsedLanguage(comboBox.Name, content, tag);
+                var tags = selectedItem.Tag as List<string> ?? new List<string> { "", "" };
+                SaveLastUsedLanguage(comboBox.Name, content, tags[0], tags[1]);
             }
         }
 
-        private void SaveLastUsedLanguage(string comboBoxName, string content, string tag)
+        private void SaveLastUsedLanguage(string comboBoxName, string content, string tesseractTag, string googleTag)
         {
             var lastUsed = new Dictionary<string, List<string>>();
 
@@ -138,8 +140,9 @@ namespace ImageProcessor
             if (!lastUsed.ContainsKey(comboBoxName))
                 lastUsed[comboBoxName] = new List<string>();
 
-            lastUsed[comboBoxName].RemoveAll(line => line.Contains($"Content=\"{content}\" Tag=\"{tag}\""));
-            lastUsed[comboBoxName].Insert(0, $"Content=\"{content}\" Tag=\"{tag}\"");
+            lastUsed[comboBoxName].RemoveAll(line => line.Contains($"Content=\"{content}\" Tag=\"{tesseractTag}\" GoogleTag=\"{googleTag}\""));
+            lastUsed[comboBoxName].Insert(0, $"Content=\"{content}\" Tag=\"{tesseractTag}\" GoogleTag=\"{googleTag}\""
+            );
 
             if (lastUsed[comboBoxName].Count > 3)
                 lastUsed[comboBoxName] = lastUsed[comboBoxName].Take(3).ToList();
@@ -153,7 +156,7 @@ namespace ImageProcessor
     {
         public static ComboBoxItem? Clone(this ComboBoxItem item)
         {
-            return item == null ? null : new ComboBoxItem { Content = item.Content, Tag = item.Tag };
+            return item == null ? null : new ComboBoxItem { Content = item.Content, Tag = new List<string>(item.Tag as List<string> ?? new List<string> { "", "" }) };
         }
     }
 }
