@@ -80,3 +80,4 @@ C:\Users\Aleksander\Documents\GitHub\ImageProcessor\obj\Debug\net8.0-windows\ref
 C:\Users\Aleksander\Documents\GitHub\ImageProcessor\obj\Debug\net8.0-windows\ImageProcessor.pdb
 C:\Users\Aleksander\Documents\GitHub\ImageProcessor\obj\Debug\net8.0-windows\ImageProcessor.genruntimeconfig.cache
 C:\Users\Aleksander\Documents\GitHub\ImageProcessor\obj\Debug\net8.0-windows\ref\ImageProcessor.dll
+C:\Users\Aleksander\Documents\GitHub\ImageProcessor\obj\Debug\net8.0-windows\GeneratedInternalTypeHelper.g.cs

@@ -91,15 +91,35 @@ namespace ImageProcessor
         }
         private async Task ProcessIMG()
         {
-            // Define preprocessed image path
             string preprocessedImagePath = Path.Combine(
                 Path.GetDirectoryName(savedFilePath) ?? "",
                 $"preprocessed_{Path.GetFileName(savedFilePath)}"
             );
 
-            // Apply image preprocessing
             CleanAndPreprocessImage(savedFilePath, preprocessedImagePath);
 
+            // Initialize Orientation Detector
+            var orientationDetector = new OrientationDetector(AppDomain.CurrentDomain.BaseDirectory + "tessdata", sourceLanguageTags[0]);
+            
+            // Check if Auto Orientation is enabled
+            if (AutoOrientationCheckBox.IsChecked == true)
+            {
+                // Detect best orientation
+                double bestAngle = orientationDetector.DetectOrientation(preprocessedImagePath);
+                if (bestAngle != 0)
+                {
+                    string OrientedImagePath = orientationDetector.RotateImage(preprocessedImagePath, bestAngle);
+                    File.Copy(OrientedImagePath, preprocessedImagePath, true);
+                }
+            }
+            else if (AutoOrientationCheckBox.IsChecked == false)
+            {
+                // Manually rotate the image
+                var angle = ManualOrientationSlider.Value;
+                string OrientedImagePath = orientationDetector.RotateImage(preprocessedImagePath, angle);
+                File.Copy(OrientedImagePath, preprocessedImagePath, true);
+            }
+            
             // Perform OCR (extract text from image)
             recognizedText = await PerformOcrAsync(preprocessedImagePath, sourceLanguageTags[0]);
 
@@ -114,9 +134,13 @@ namespace ImageProcessor
             {
                 using (SixLabors.ImageSharp.Image<Rgba32> image = SixLabors.ImageSharp.Image.Load<Rgba32>(inputPath))
                 {
-                    image.Mutate(x => x.Resize((int)(image.Width * ResizeFactor), (int)(image.Height * ResizeFactor))
-                                       .Grayscale()
-                                       .BinaryThreshold(GlobalThreshold));
+                    // Step 1: Resize for better OCR performance
+                    image.Mutate(x => x.Resize((int)(image.Width * ResizeFactor), (int)(image.Height * ResizeFactor)));
+
+                    // Step 2: Convert to grayscale and apply thresholding
+                    image.Mutate(x => x.Grayscale().BinaryThreshold(GlobalThreshold));
+
+                    // Step 3: Save the preprocessed image (before detecting orientation)
                     image.Save(outputPath);
                 }
             }

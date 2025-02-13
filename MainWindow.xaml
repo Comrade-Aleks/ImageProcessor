@@ -46,19 +46,33 @@
             </StackPanel>
         </StackPanel>
 
-
         <!-- Process Button -->
         <Button x:Name="ProcessButton" Content="Read selected region" Width="150" Height="30"
-                HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,160,0,0"
+                HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,165,0,0"
                 Click="ProcessButton_Click"/>
 
         <!-- Translation Button -->
         <Button x:Name="TranslateButton" Content="Translate" Width="150" Height="30"
-                HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,200,0,0"
+                HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,200,0,0"
                 Click="TranslateButton_Click"/>
 
+        <!-- Auto Orientation Checkbox -->
+        <CheckBox x:Name="AutoOrientationCheckBox" Content="Auto Orientation" Foreground="White" Margin="0,233,0,0"/>
+
+        <!-- Manual Orientation Slider -->
+        <StackPanel VerticalAlignment="Top" Margin="0,260,0,0">
+            <TextBlock Text="Manual Orientation" Foreground="White" />
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <Slider x:Name="ManualOrientationSlider" Minimum="0" Maximum="360" Value="0" TickFrequency="10"
+                        Width="200" IsSnapToTickEnabled="True" TickPlacement="BottomRight"
+                        ValueChanged="PreprocessingSettingsChanged"/>
+                <TextBlock Text="{Binding ElementName=ManualOrientationSlider, Path=Value, StringFormat='{}{0:F0}'}"
+                        Foreground="White" Margin="10,0,0,0"/>
+            </StackPanel>
+        </StackPanel>
+
         <!-- Output Box -->
-        <TextBox x:Name="OutputTextBox" Background="#FFD3D3D3" Margin="0,250,0,0" 
+        <TextBox x:Name="OutputTextBox" Background="#FFD3D3D3" Margin="0,320,0,0" 
                  HorizontalAlignment="Stretch" VerticalAlignment="Stretch" 
                  TextWrapping="Wrap" AcceptsReturn="True" VerticalScrollBarVisibility="Auto" 
                  IsReadOnly="True"/>
