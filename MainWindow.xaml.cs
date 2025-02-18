@@ -99,27 +99,30 @@ namespace ImageProcessor
             CleanAndPreprocessImage(savedFilePath, preprocessedImagePath);
 
             // Initialize Orientation Detector
-            var orientationDetector = new OrientationDetector(AppDomain.CurrentDomain.BaseDirectory + "tessdata", sourceLanguageTags[0]);
-            
+            var orientationDetector = new SmartOrientationDetector(AppDomain.CurrentDomain.BaseDirectory + "tessdata");
+
             // Check if Auto Orientation is enabled
             if (AutoOrientationCheckBox.IsChecked == true)
             {
                 // Detect best orientation
-                double bestAngle = orientationDetector.DetectOrientation(preprocessedImagePath);
+                int bestAngle = orientationDetector.DetectBestOrientation(preprocessedImagePath);
+                System.Windows.Forms.MessageBox.Show($"Final Best Orientation: {bestAngle}°");
+
                 if (bestAngle != 0)
                 {
-                    string OrientedImagePath = orientationDetector.RotateImage(preprocessedImagePath, bestAngle);
-                    File.Copy(OrientedImagePath, preprocessedImagePath, true);
+                    // Rotate the image to correct its orientation
+
+                    File.Copy(orientationDetector.RotateImage(preprocessedImagePath, bestAngle), preprocessedImagePath, true);
+
+                    System.Windows.Forms.MessageBox.Show($"Image rotated by {bestAngle}° and saved.");
                 }
             }
-            else if (AutoOrientationCheckBox.IsChecked == false)
+            else
             {
-                // Manually rotate the image
-                var angle = ManualOrientationSlider.Value;
-                string OrientedImagePath = orientationDetector.RotateImage(preprocessedImagePath, angle);
-                File.Copy(OrientedImagePath, preprocessedImagePath, true);
-            }
-            
+                double bestAngle = ManualOrientationSlider.Value;
+                
+                File.Copy(orientationDetector.RotateImage(preprocessedImagePath, bestAngle), preprocessedImagePath, true);
+            }            
             // Perform OCR (extract text from image)
             recognizedText = await PerformOcrAsync(preprocessedImagePath, sourceLanguageTags[0]);
 
