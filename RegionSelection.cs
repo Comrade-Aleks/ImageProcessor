@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
@@ -15,8 +14,9 @@ namespace ImageProcessor
         private Point startPoint;
         private Point endPoint;
         private bool isSelecting;
-        private Rectangle allScreensBounds;
+        private readonly Rectangle allScreensBounds;
 
+        // Initializes the form for selecting a region on the screen
         public RegionSelectorForm()
         {
             this.FormBorderStyle = FormBorderStyle.None;
@@ -26,13 +26,11 @@ namespace ImageProcessor
             this.DoubleBuffered = true;
             this.Cursor = Cursors.Cross;
 
-            // Get the full bounding box that covers all monitors
             allScreensBounds = GetTrueMultiMonitorBounds();
 
-            // Position and size the form to cover all monitors
-            this.Location = new Point(allScreensBounds.Left, allScreensBounds.Top);
-            this.Size = new Size(allScreensBounds.Width, allScreensBounds.Height);
-
+            this.StartPosition = FormStartPosition.Manual;
+            this.Location = allScreensBounds.Location;
+            this.Size = allScreensBounds.Size;
 
             this.MouseDown += OnMouseDown;
             this.MouseMove += OnMouseMove;
@@ -40,43 +38,46 @@ namespace ImageProcessor
             this.Paint += OnPaint;
         }
 
+        // Handles the start of region selection
         private void OnMouseDown(object? sender, MouseEventArgs e)
         {
             isSelecting = true;
-            startPoint = ConvertToGlobalScreenCoordinates(e.Location);
+            startPoint = PointToScreen(e.Location);
             endPoint = startPoint;
             Invalidate();
         }
 
+        // Updates the selected region while dragging
         private void OnMouseMove(object? sender, MouseEventArgs e)
         {
             if (isSelecting)
             {
-                endPoint = ConvertToGlobalScreenCoordinates(e.Location);
+                endPoint = PointToScreen(e.Location);
                 Invalidate();
             }
         }
 
+        // Finalizes the selection and closes the form
         private void OnMouseUp(object? sender, MouseEventArgs e)
         {
             isSelecting = false;
-            endPoint = ConvertToGlobalScreenCoordinates(e.Location);
-
+            endPoint = PointToScreen(e.Location);
             SelectedRegion = GetRectangle(startPoint, endPoint);
             this.DialogResult = DialogResult.OK;
             this.Close();
         }
 
+        // Draws the selection rectangle on the screen
         private void OnPaint(object? sender, PaintEventArgs e)
         {
             using (SolidBrush overlayBrush = new SolidBrush(Color.FromArgb(100, Color.Black)))
             {
-                e.Graphics.FillRectangle(overlayBrush, this.ClientRectangle); // Gray overlay
+                e.Graphics.FillRectangle(overlayBrush, this.ClientRectangle);
             }
 
             if (isSelecting)
             {
-                Rectangle rect = GetRectangle(startPoint, endPoint);
+                Rectangle rect = GetRectangle(PointToClient(startPoint), PointToClient(endPoint));
                 using (Pen pen = new Pen(Color.Red, 2))
                 {
                     e.Graphics.DrawRectangle(pen, rect);
@@ -88,6 +89,24 @@ namespace ImageProcessor
             }
         }
 
+        // Gets the total bounding rectangle of all screens
+        private static Rectangle GetTrueMultiMonitorBounds()
+        {
+            int minX = int.MaxValue, minY = int.MaxValue;
+            int maxX = int.MinValue, maxY = int.MinValue;
+
+            foreach (var screen in Screen.AllScreens)
+            {
+                minX = Math.Min(minX, screen.Bounds.Left);
+                minY = Math.Min(minY, screen.Bounds.Top);
+                maxX = Math.Max(maxX, screen.Bounds.Right);
+                maxY = Math.Max(maxY, screen.Bounds.Bottom);
+            }
+
+            return new Rectangle(minX, minY, maxX - minX, maxY - minY);
+        }
+
+        // Creates a rectangle from two corner points
         private Rectangle GetRectangle(Point p1, Point p2)
         {
             return new Rectangle(
@@ -97,48 +116,12 @@ namespace ImageProcessor
                 Math.Abs(p1.Y - p2.Y));
         }
 
-        private static Rectangle GetTrueMultiMonitorBounds()
-        {
-            string debugInfo = "Detected Screens:\n";
-            
-            int minX = int.MaxValue, minY = int.MaxValue;
-            int maxX = int.MinValue, maxY = int.MinValue;
-
-            foreach (var screen in Screen.AllScreens)
-            {
-                debugInfo += $"Monitor: {screen.DeviceName}, Bounds: {screen.Bounds}\n";
-                minX = Math.Min(minX, screen.Bounds.Left);
-                minY = Math.Min(minY, screen.Bounds.Top);
-                maxX = Math.Max(maxX, screen.Bounds.Right);
-                maxY = Math.Max(maxY, screen.Bounds.Bottom);
-            }
-
-            Rectangle fullBounds = new Rectangle(minX, minY, maxX - minX, maxY - minY);
-            debugInfo += $"Computed Multi-Monitor Bounds: {fullBounds}\n";
-            
-            System.Windows.Forms.MessageBox.Show(debugInfo, "Monitor Debug Info", System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Information);
-            
-            return fullBounds;
-        }
-
-
-
-        private Point ConvertToGlobalScreenCoordinates(Point localPoint)
-        {
-            return new Point(localPoint.X + this.Left, localPoint.Y + this.Top);
-        }
-
+        // Captures the selected region of the screen
         public Bitmap CaptureRegion()
         {
             if (SelectedRegion == Rectangle.Empty)
             {
                 throw new InvalidOperationException("No region selected.");
-            }
-
-            bool isValid = Screen.AllScreens.Any(screen => screen.Bounds.IntersectsWith(SelectedRegion));
-            if (!isValid)
-            {
-                throw new InvalidOperationException("Selected region is not fully within any screen.");
             }
 
             Bitmap bitmap = new Bitmap(SelectedRegion.Width, SelectedRegion.Height, PixelFormat.Format32bppArgb);
@@ -149,7 +132,7 @@ namespace ImageProcessor
             return bitmap;
         }
 
-
+        // Saves the captured region to a file asynchronously
         public async Task<string> SaveCapturedRegionAsync(string fileName)
         {
             string imgFolderPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ImgAndData");
