@@ -106,21 +106,17 @@ namespace ImageProcessor
             {
                 // Detect best orientation
                 int bestAngle = orientationDetector.DetectBestOrientation(preprocessedImagePath);
-                System.Windows.Forms.MessageBox.Show($"Final Best Orientation: {bestAngle}°");
 
+                // Rotate the image to correct its orientation and then save it
                 if (bestAngle != 0)
                 {
-                    // Rotate the image to correct its orientation
-
+                    ManualOrientationSlider.Value = bestAngle;
                     File.Copy(orientationDetector.RotateImage(preprocessedImagePath, bestAngle), preprocessedImagePath, true);
-
-                    System.Windows.Forms.MessageBox.Show($"Image rotated by {bestAngle}° and saved.");
                 }
             }
             else
             {
                 double bestAngle = ManualOrientationSlider.Value;
-                
                 File.Copy(orientationDetector.RotateImage(preprocessedImagePath, bestAngle), preprocessedImagePath, true);
             }            
             // Perform OCR (extract text from image)
