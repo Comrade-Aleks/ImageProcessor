@@ -5,6 +5,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
+using Microsoft.Win32;
 using Tesseract;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
@@ -35,44 +37,18 @@ namespace ImageProcessor
             ToLanguageComboBox.SelectionChanged += languageLoader.ComboBox_SelectionChanged;
         }
 
-        // This function is triggered when the "Select Region" button is clicked
-        private async void ProcessButton_Click(object sender, RoutedEventArgs e)
-        {
-            await TakeImage();
-        }
+
 
         // Main function to process the image: capture, preprocess, OCR, and translate
-        private async Task TakeImage()
+        private async Task GetImage()
         {
             try
             {
-                // Show the region selection form
-                using (var regionSelector = new RegionSelectorForm())
-                {
-                    if (regionSelector.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-                    {
-                        // Save the captured region to the Img folder
-                        
-                        savedFilePath = await regionSelector.SaveCapturedRegionAsync(fileName);
+                savedFilePath = await StartRegionSelector();
 
-                        // Ensure file path is valid
-                        if (string.IsNullOrEmpty(savedFilePath) || !File.Exists(savedFilePath))
-                        {
-                            OutputTextBox.Text = "Error: Captured image file not found.";
-                            return;
-                        }
-
-                        GetLanguageTags();
-
-                        // Validate language selection
-                        if (string.IsNullOrEmpty(sourceLanguageTags[0]))
-                        {
-                            OutputTextBox.Text = "Please select a source language.";
-                            return;
-                        }
-                        await ProcessIMG();
-                    }
-                }
+                // Ensure image file exists to continue with processing the image
+                if (!string.IsNullOrEmpty(savedFilePath) || File.Exists(savedFilePath)) {await ProcessIMG();}
+                else {OutputTextBox.Text = "Error: Captured image file not found.";}
             }
             catch (Exception ex)
             {
@@ -80,24 +56,56 @@ namespace ImageProcessor
             }
         }
 
+        // Captures the selected region of the screen
+        private async Task<string> StartRegionSelector()
+        {
+            // Show the region selection form
+            using (var regionSelector = new RegionSelectorForm())
+            {
+                // Wait until the region is selected
+                if (regionSelector.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+                {
+                    // Save the captured image to the Img folder
+                    return await regionSelector.SaveCapturedRegionAsync(fileName);
+                }
+            }
+            return string.Empty;
+        }
+
+        // Get selected languages from ComboBoxes
         private void GetLanguageTags()
         {
-            // Get selected languages from ComboBoxes
             var selectedItem = FromLanguageComboBox.SelectedItem as ComboBoxItem;
             sourceLanguageTags = (selectedItem?.Tag as List<string>)?.ToArray() ?? new string[2];
 
             selectedItem = ToLanguageComboBox.SelectedItem as ComboBoxItem;
             targetLanguageTags = (selectedItem?.Tag as List<string>)?.ToArray() ?? new string[2];
+
+            // Make sure source language is selected
+            if (string.IsNullOrEmpty(sourceLanguageTags[0]))
+            {
+                OutputTextBox.Text = "Please select a source language.";
+                return;
+            }
         }
         private async Task ProcessIMG()
         {
-            string preprocessedImagePath = Path.Combine(
-                Path.GetDirectoryName(savedFilePath) ?? "",
-                $"preprocessed_{Path.GetFileName(savedFilePath)}"
-            );
-
+            string preprocessedImagePath = Path.Combine(Path.GetDirectoryName(savedFilePath) ?? "", $"preprocessed_{Path.GetFileName(savedFilePath)}");
             CleanAndPreprocessImage(savedFilePath, preprocessedImagePath);
 
+            // Orient the image
+            OrientIMG(preprocessedImagePath);
+
+            // Perform OCR (extract text from image)
+            GetLanguageTags();
+            recognizedText = await PerformOcrAsync(preprocessedImagePath, sourceLanguageTags[0]);
+
+            // Display results in TextBox
+            OutputTextBox.Text = $"Recognized Text:\n{recognizedText}\n\nTranslated Text:\n{translatedText}";
+        }
+
+        private void OrientIMG(string preprocessedImagePath)
+        {
             // Initialize Orientation Detector
             var orientationDetector = new SmartOrientationDetector(AppDomain.CurrentDomain.BaseDirectory + "tessdata");
 
@@ -118,12 +126,7 @@ namespace ImageProcessor
             {
                 double bestAngle = ManualOrientationSlider.Value;
                 File.Copy(orientationDetector.RotateImage(preprocessedImagePath, bestAngle), preprocessedImagePath, true);
-            }            
-            // Perform OCR (extract text from image)
-            recognizedText = await PerformOcrAsync(preprocessedImagePath, sourceLanguageTags[0]);
-
-            // Display results in TextBox
-            OutputTextBox.Text = $"Recognized Text:\n{recognizedText}\n\nTranslated Text:\n{translatedText}";
+            }
         }
 
         // Applies image preprocessing (resize, grayscale, threshold)
@@ -185,14 +188,6 @@ namespace ImageProcessor
             }
         }
 
-        // This function is triggered when the "Translate" button is clicked
-        private async void TranslateButton_Click(object sender, RoutedEventArgs e)
-        {
-            // Translate extracted text
-            GetLanguageTags();
-            await TranslateTextAsync();
-        }
-
         // Translates the extracted text using Google Translator
         private async Task<string> TranslateTextAsync()
         {
@@ -218,6 +213,22 @@ namespace ImageProcessor
             }
         }
 
+        //////////////////////////////// EVENT HANDLERS //////////////////////////////////
+
+        // This function is triggered when the "Select Region" button is clicked
+        private async void ProcessButton_Click(object sender, RoutedEventArgs e)
+        {
+            await GetImage();
+        }
+
+        // This function is triggered when the "Translate" button is clicked
+        private async void TranslateButton_Click(object sender, RoutedEventArgs e)
+        {
+            // Translate extracted text
+            GetLanguageTags();
+            await TranslateTextAsync();
+        }
+
         // Automatically reprocess the image when preprocessing settings change
         private async void PreprocessingSettingsChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
@@ -230,6 +241,39 @@ namespace ImageProcessor
             {
                 await ProcessIMG();
             }
+        }
+
+        private void FileUploadBorder_Drop(object sender, System.Windows.DragEventArgs e)
+        {
+            if (e.Data.GetDataPresent(System.Windows.DataFormats.FileDrop))
+            {
+                string[] files = (string[])e.Data.GetData(System.Windows.DataFormats.FileDrop);
+                if (files?.Length > 0)
+                {
+                    string filePath = files[0];
+                    System.Windows.Forms.MessageBox.Show($"File uploaded: {filePath}", "File Upload", System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Information);
+                }
+            }
+        }
+
+        private void FileUploadBorder_Click(object sender, MouseButtonEventArgs e)
+        {
+            System.Windows.Forms.OpenFileDialog openFileDialog = new System.Windows.Forms.OpenFileDialog
+            {
+                Filter = "Image Files|*.jpg;*.jpeg;*.png;*.bmp;*.gif",
+                Title = "Select an Image File"
+            };
+
+            if (openFileDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            {
+                string filePath = openFileDialog.FileName;
+                System.Windows.Forms.MessageBox.Show($"File selected: {filePath}", "File Selection", System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Information);
+            }
+        }
+
+        private void AutoCaptureButton_Click(object sender, RoutedEventArgs e)
+        {
+            System.Windows.Forms.MessageBox.Show("Auto Capture feature not yet implemented.", "Auto Capture", System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Information);
         }
     }
 }
