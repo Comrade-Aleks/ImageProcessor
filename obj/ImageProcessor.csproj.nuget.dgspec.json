@@ -50,6 +50,10 @@
         "net8.0-windows7.0": {
           "targetAlias": "net8.0-windows",
           "dependencies": {
+            "Extended.Wpf.Toolkit": {
+              "target": "Package",
+              "version": "[4.7.25103.5738, )"
+            },
             "GTranslate": {
               "target": "Package",
               "version": "[2.2.8, )"

@@ -124,7 +124,7 @@ namespace ImageProcessor
             }
             else
             {
-                double bestAngle = ManualOrientationSlider.Value;
+                double bestAngle = ManualOrientationSlider.Value ?? 0;
                 File.Copy(orientationDetector.RotateImage(preprocessedImagePath, bestAngle), preprocessedImagePath, true);
             }
         }
@@ -230,11 +230,18 @@ namespace ImageProcessor
         }
 
         // Automatically reprocess the image when preprocessing settings change
-        private async void PreprocessingSettingsChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        private async void PreprocessingSettingsChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
         {
             if (!IsLoaded) return;
-            ResizeFactor = ResizeFactorSlider.Value;
-            GlobalThreshold = (float)ThresholdSlider.Value;
+
+            if (sender == ResizeFactorSlider)
+            {
+                ResizeFactor = e.NewValue is double newValue ? newValue : 1.0;
+            }
+            else if (sender == ThresholdSlider)
+            {
+                GlobalThreshold = e.NewValue is double newThreshold ? (float)newThreshold : 0.5f;
+            }
 
             // Only reprocess if there's existing text in the output
             if (!string.IsNullOrEmpty(OutputTextBox.Text) && !OutputTextBox.Text.StartsWith("Processing..."))
@@ -242,6 +249,7 @@ namespace ImageProcessor
                 await ProcessIMG();
             }
         }
+
 
         private void FileUploadBorder_Drop(object sender, System.Windows.DragEventArgs e)
         {
